@@ -10,6 +10,7 @@ repeat = 2 #PERIODIC TASKS
 def read_jobs(file):
     f = open(job_file, "r")
     lines = f.readlines()[1:]
+    f.close()
     jobs = dict()
 
     for line in lines:
@@ -22,6 +23,7 @@ def read_jobs(file):
 def read_servers(file):
     f = open(server_file, "r")
     lines = f.readlines()[1:]
+    f.close()
     servers = dict()
 
     for line in lines:
@@ -35,6 +37,7 @@ def read_servers(file):
 def read_dependencies(file):
     f = open(depedency_file, "r")
     lines = f.readlines()[1:]
+    f.close()
     dependencies = dict()
 
     for line in lines:
@@ -50,19 +53,31 @@ def read_dependencies(file):
     return dependencies
 
 
+def write_results(schedule, file):
+    f = open(file, "w")
+    f.write("#jobid serverid start end frequency\n")
+
+    for k, v in schedule.items():
+        line = f"{k} {v[0]} {v[1]} {v[2]} {v[3]}\n"
+        f.write(line)
+    
+    f.close()
+
+
 def FIFO(jobs, servers, dependencies):
-    # We sort jobs by arrival date
+    # Sorts jobs by arrival date
     sorted_jobs = {k: v for k, v in sorted(jobs.items(), key=lambda item: item[1][0])}
     schedule = dict()
     server_id = 0
     frequency = 1
+    current_date = 0
 
-    for k, v in sorted_jobs:
+    for k, v in sorted_jobs.items():
         arrival = v[0]
         w = v[1]
-        start = 0 #todo
-        end = 0 #todo
-
+        start = current_date
+        end = current_date + w
+        current_date = end
         schedule[k] = [server_id, start, end, frequency]
     
     return schedule
@@ -73,3 +88,6 @@ if __name__ == "__main__":
     jobs = read_jobs(job_file)
     servers = read_servers(server_file)
     dependencies = read_dependencies(depedency_file)
+    test = FIFO(jobs, servers, dependencies)
+    print(test)
+    write_results(test, "test.txt")
