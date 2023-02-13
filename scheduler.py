@@ -147,6 +147,10 @@ def RR(jobs, servers, dependencies, quantum):
     return schedule
 
 
+def EDF(jobs, servers, dependencies):
+    pass
+
+
 
 if __name__ == "__main__":
     jobs = read_jobs(JOB_FILE)
