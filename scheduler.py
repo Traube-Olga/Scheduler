@@ -3,7 +3,7 @@ SERVER_FILE = "servers.txt"
 DEPENDENCY_FILE = "dependencies.txt"
 POWER_CAP = 600 #WATTS
 ENERGY_CAP = 10000 #JOULES
-REPEAT = 2 #PERIODIC TASKS
+REPEAT = 0 #PERIODIC TASKS
 
 
 
@@ -148,8 +148,40 @@ def RR(jobs, servers, dependencies, quantum):
 
 
 def EDF(jobs, servers, dependencies):
-    pass
+    schedule = dict()
+    current_time = 0
+    server_id = 0
+    frequency = 1
+    unfinished_jobs = jobs.copy()
 
+    def get_earliest_deadline_job(unfinished_jobs):
+        earliest_deadline = float('inf')
+        earliest_deadline_job = None
+
+        for job_id, job in unfinished_jobs.items():
+            deadline = job[2]
+
+            if deadline < earliest_deadline:
+                earliest_deadline = deadline
+                earliest_deadline_job = job_id
+            
+        return earliest_deadline_job
+
+    while unfinished_jobs:
+        job_id = get_earliest_deadline_job(unfinished_jobs)
+        job = unfinished_jobs.pop(job_id)
+
+        arrival_date = job[0]
+        units_of_work = job[1]
+
+        start_time = max(current_time, arrival_date)
+        end_time = start_time + units_of_work
+
+        current_time = end_time
+
+        schedule[job_id] = [server_id, start_time, end_time, frequency]
+    
+    return schedule
 
 
 if __name__ == "__main__":
@@ -161,3 +193,5 @@ if __name__ == "__main__":
     write_results(FIFO_schedule, "FIFOschedule.txt")
     RR_schedule = RR(jobs, servers, dependencies, 5)
     write_results(RR_schedule, "RRschedule.txt")
+    EDF_schedule = EDF(jobs, servers, dependencies)
+    write_results(EDF_schedule, "EDFschedule.txt")
