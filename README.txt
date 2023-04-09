@@ -1,4 +1,4 @@
-Usage :
+Usage of plotter:
 python3 plotter.py <results file>
 
 Format of results file :
@@ -7,5 +7,3 @@ Format of results file :
 0 0 0 1
 1 0 1 2
 ...
-
-Enjoy guys!

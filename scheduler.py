@@ -60,8 +60,8 @@ def write_results(schedule, file):
     f = open(file, "w")
     f.write("#jobid serverid start end frequency\n")
 
-    for k, v in schedule.items():
-        line = f"{k[0]} {v[0]} {v[1]} {v[2]} {v[3]}\n"
+    for job in schedule:
+        line = f"{job[0]} {job[1]} {job[2]} {job[3]} {job[4]}\n"
         f.write(line)
     
     f.close()
@@ -86,70 +86,61 @@ def add_periodic_jobs(jobs, repeat):
 
 def FIFO(jobs, servers, dependencies):
     sorted_jobs = {k: v for k, v in sorted(jobs.items(), key=lambda item: item[1][0])}  # Sort jobs by arrival date
-    schedule = dict()
+    schedule = []
     server_id = 0
     frequency = 1
     current_date = 0
 
-    for k, v in sorted_jobs.items():
-        arrival = v[0]
-        w = v[1]
+    for job_id, v in sorted_jobs.items():
+        arrival_date, w, _, _ = v
         
-        if arrival > current_date:
-            start = arrival
+        if arrival_date > current_date:
+            start = arrival_date
         else:
             start = current_date
         
         end = start + w
         current_date = end
-        schedule[k] = [server_id, start, end, frequency]
+        schedule.append([job_id[0], server_id, start, end, frequency])
     
     return schedule
 
 
 def RR(jobs, servers, dependencies, quantum):
-    sorted_jobs = {k: v for k, v in sorted(jobs.items(), key=lambda item: item[1][0])}  # Sort jobs by arrival date
-    schedule = dict()
-    job_ids = [k for k in jobs.keys()]
+    jobs_cpy = jobs.copy()
+    schedule = []
+    queue = [k for k in jobs_cpy.keys()]
     server_id = 0
     frequency = 1
-    queue = []
-    next_arrival = 0
     current_date = 0
-    cnt = 0
 
-    while job_ids:
-        new_job = job_ids.pop(0)
-        queue.append(new_job)
+    while queue:
+        job_id = queue.pop(0)
+        arrival_date, w, deadline, period = jobs_cpy[job_id]
 
-        if job_ids:
-            next_job = job_ids[0]
-            next_arrival = sorted_jobs[next_job][0]
+        if arrival_date > current_date:
+            start = arrival_date
+
         else:
-            next_arrival = -1
-
-        while next_arrival > current_date and queue:
-            current_job = queue.pop(0)
-            w = sorted_jobs[current_job][1]
             start = current_date
 
-            if w > quantum:
-                sorted_jobs[current_job][1] -= quantum
-                current_date += quantum
-                queue.append(current_job)
+        if w <= quantum:
+            end = start + w
 
-            else:
-                current_date += w
-            
-            schedule[(current_job[0], cnt)] = [server_id, start, current_date, frequency]
-            cnt += 1
+        else:
+            end = start + quantum
+            queue.append(job_id)
+            jobs_cpy[job_id] = [arrival_date, w - quantum, deadline, period]
+        
+        schedule.append([job_id[0], server_id, start, end, frequency])
+        current_date = end
     
     return schedule
 
 
 def EDF(jobs, servers, dependencies):
-    schedule = dict()
-    current_time = 0
+    schedule = []
+    current_date = 0
     server_id = 0
     frequency = 1
     unfinished_jobs = jobs.copy()
@@ -172,16 +163,17 @@ def EDF(jobs, servers, dependencies):
         job = unfinished_jobs.pop(job_id)
 
         arrival_date = job[0]
-        units_of_work = job[1]
+        w = job[1]
 
-        start_time = max(current_time, arrival_date)
-        end_time = start_time + units_of_work
+        start = max(current_date, arrival_date)
+        end = start + w
 
-        current_time = end_time
+        current_date = end
 
-        schedule[job_id] = [server_id, start_time, end_time, frequency]
+        schedule.append([job_id[0], server_id, start, end, frequency])
     
     return schedule
+
 
 
 if __name__ == "__main__":
