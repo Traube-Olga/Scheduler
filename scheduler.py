@@ -138,6 +138,28 @@ def RR(jobs, servers, dependencies, quantum):
     return schedule
 
 
+def RMS(jobs, servers, dependencies):
+    sorted_jobs = {k: v for k, v in sorted(jobs.items(), key=lambda item: item[1][2])}  # Sort jobs by their deadline
+    schedule = []
+    current_date = 0
+    server_id = 0
+    frequency = 1
+
+    for job_id, v in sorted_jobs.items():
+        arrival_date, w, _, _ = v
+        
+        if arrival_date > current_date:
+            start = arrival_date
+        else:
+            start = current_date
+        
+        end = start + w
+        current_date = end
+        schedule.append([job_id[0], server_id, start, end, frequency])
+    
+    return schedule
+
+
 def EDF(jobs, servers, dependencies):
     schedule = []
     current_date = 0
@@ -185,5 +207,7 @@ if __name__ == "__main__":
     write_results(FIFO_schedule, "FIFOschedule.txt")
     RR_schedule = RR(jobs, servers, dependencies, 5)
     write_results(RR_schedule, "RRschedule.txt")
+    RMS_schedule = RMS(jobs, servers, dependencies)
+    write_results(RMS_schedule, "RMSschedule.txt")
     EDF_schedule = EDF(jobs, servers, dependencies)
     write_results(EDF_schedule, "EDFschedule.txt")
